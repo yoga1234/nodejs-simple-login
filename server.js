@@ -1,17 +1,40 @@
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
 const express = require('express');
 const app = express();
 const bcrypt = require('bcrypt');
+const passport = require('passport');
+const flash = require('express-flash');
+const session = require('express-session');
 const PORT = 3000;
+
+const initializePassport = require('./passport-config');
+initializePassport(
+  passport,
+  email => users.find(user => user.email === email),
+  id => users.find(user => user.id === id)
+);
 
 //Saving data as array
 const users = [];
 
 app.set('view-engine', 'ejs');
 app.use(express.urlencoded({ extended: false }));
+app.use(flash());
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false
+}));
+
+app.use(passport.initialize());
+app.use(passport.session())
 
 //Make a route for home
 app.get('/', (req, res) => {
-  res.render('index.ejs');
+  res.render('index.ejs', { name: req.user.name });
 });
 
 //make a route for login
@@ -20,9 +43,11 @@ app.get('/login', (req, res) => {
 });
 
 //receiving data from login
-app.post('/login', (req, res) => {
-
-});
+app.post('/login', passport.authenticate('local', {
+  successRedirect: '/',
+  failureRedirect: '/login',
+  failureFlash: true
+}));
 
 //make a route for register
 app.get('/register', (req, res) => {
@@ -45,5 +70,13 @@ app.post('/register', async (req, res) => {
     res.redirect('/register');
   }
 });
+
+function checkAuthentication(req, res, next){
+    if(req.authenticated()){
+      return next()
+    }
+
+    res.redirect('/login');
+}
 
 app.listen(PORT);
