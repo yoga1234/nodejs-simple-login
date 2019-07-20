@@ -1,0 +1,19 @@
+{
+  "name": "nodejs-simple-login",
+  "version": "1.0.0",
+  "description": "A simple example login using nodejs",
+  "main": "index.js",
+  "scripts": {
+    "devStart": "nodemon server.js"
+  },
+  "author": "Yogasmara",
+  "license": "ISC",
+  "dependencies": {
+    "ejs": "^2.6.2",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "dotenv": "^8.0.0",
+    "nodemon": "^1.19.1"
+  }
+}
