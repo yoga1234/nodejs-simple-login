@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt');
 const passport = require('passport');
 const flash = require('express-flash');
 const session = require('express-session');
+const methodOverride = require('method-override');
 const PORT = 3000;
 
 const initializePassport = require('./passport-config');
@@ -30,7 +31,8 @@ app.use(session({
 }));
 
 app.use(passport.initialize());
-app.use(passport.session())
+app.use(passport.session());
+app.use(methodOverride('_method'));
 
 //Make a route for home
 app.get('/', (req, res) => {
@@ -38,24 +40,24 @@ app.get('/', (req, res) => {
 });
 
 //make a route for login
-app.get('/login', (req, res) => {
+app.get('/login', checkNotAuthenticated, (req, res) => {
   res.render('login.ejs');
 });
 
 //receiving data from login
-app.post('/login', passport.authenticate('local', {
+app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
   successRedirect: '/',
   failureRedirect: '/login',
   failureFlash: true
 }));
 
 //make a route for register
-app.get('/register', (req, res) => {
+app.get('/register',checkNotAuthenticated, (req, res) => {
   res.render('register.ejs');
 });
 
 //receiving data from register
-app.post('/register', async (req, res) => {
+app.post('/register', checkNotAuthenticated, async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(req.body.password, 10); //make password hashed 10 times
     users.push({
@@ -71,12 +73,24 @@ app.post('/register', async (req, res) => {
   }
 });
 
+app.delete('/logout', (req, res) => {
+  req.logout();
+  res.redirect('/login');
+})
+
 function checkAuthentication(req, res, next){
     if(req.authenticated()){
       return next()
     }
 
     res.redirect('/login');
+}
+
+function checkNotAuthenticated(req, res, next){
+  if(req.isAuthenticated()){
+    return res.redirect('/');
+  }
+  next();
 }
 
 app.listen(PORT);
